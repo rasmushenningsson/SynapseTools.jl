@@ -25,8 +25,8 @@ function appendfitness!(metadata::DataFrame, fitnessTable::DataFrame; allowInexa
 
 
     # create new columns
-    metadata[:Fitness] = DataArray(Float64, size(metadata,1))
-    metadata[:FitnessID] = DataArray(String, size(metadata,1))
+    metadata[:Fitness] = 0.0
+    metadata[:FitnessID] = ""
 
     # find exact SampleID matches between metadata and fitnessTable
     matches = indexin(metadata[:SampleID], map(string,fitnessTable[:SampleID])) # converting to string converts NA->"NA" which can be handled by indexin
@@ -40,8 +40,8 @@ function appendfitness!(metadata::DataFrame, fitnessTable::DataFrame; allowInexa
         fitnessTable = fitnessTable[setdiff(1:end,matches),:] # remove those fitness entries that have been used
         used = falses(size(fitnessTable,1)) # but from now on, keep track of which ones we have used rather than removing rows in the loop
 
-        for i in find(isna.(metadata[:Fitness])) # for those samples we don't have a fitness value for
-            if isna(metadata[i,:Reference]) || isna(metadata[i,:Mutagen]) || isna(metadata[i,:Dose]) || isna(metadata[i,:Passage])
+        for i in find(ismissing.(metadata[:Fitness])) # for those samples we don't have a fitness value for
+            if ismissing(metadata[i,:Reference]) || ismissing(metadata[i,:Mutagen]) || ismissing(metadata[i,:Dose]) || ismissing(metadata[i,:Passage])
                 continue # skip samples with incomplete metadata
             end
 

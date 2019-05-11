@@ -19,6 +19,8 @@ else
     if synapseInstalled
         using SynapseClient
         using DISSEQT
+        using DataFrames
+        using Missings
 
         import SynapseClient: AbstractEntity, Entity, File, Folder, Project, Activity
 

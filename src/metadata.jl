@@ -1,4 +1,3 @@
-using DataFrames, DataArrays
 
 
 function _SNumber(name)
@@ -59,12 +58,12 @@ end
 filtermetadata(metadata::DataFrame, filter::Symbol) = filter in names(metadata) ? metadata : DataFrame()
 function filtermetadata{T<:AbstractArray}(metadata::DataFrame, filter::Pair{Symbol,T}) 
     filter.first in names(metadata) || return DataFrame()
-    mask = map!(x->!isna(x) && x in filter.second, BitArray(size(metadata,1)), metadata[filter.first])
+    mask = map!(x->!ismissing(x) && x in filter.second, BitArray(size(metadata,1)), metadata[filter.first])
     countnz(mask)==0 ? DataFrame() : metadata[mask,:]
 end
 function filtermetadata{T}(metadata::DataFrame, filter::Pair{Symbol,T}) 
     filter.first in names(metadata) || return DataFrame()
-    mask = .~isna.(metadata[filter.first]) .& (metadata[filter.first] .== filter.second)
+    mask = .~ismissing.(metadata[filter.first]) .& (metadata[filter.first] .== filter.second)
     countnz(mask)==0 ? DataFrame() : metadata[mask,:]
 end
 function filtermetadata(metadata::DataFrame, filter::Pair{Symbol,Function}) 
@@ -126,7 +125,7 @@ function appendsynapseids!(syn, metadata::DataFrame, folderID::AbstractString, f
     synapseIDs = Vector{String}(N)
 
     for columnName in columnNames
-        metadata[columnName] = DataArray(String,N)
+        metadata[columnName] = ""
     end
 
     # partition samples by run, to make as few Synapse queries as possible
@@ -199,13 +198,13 @@ function downloadbymeta!(syn, metadata::DataFrame, IDColumn::Symbol, pathColumn:
     kwargs = isempty(cacheDir) ? () :    
 
     ids = metadata[IDColumn]
-    mask = .~isna.(ids)
+    mask = .~ismissing.(ids)
 
     paths = isempty(cacheDir) ?
             localpath(syn, ids[mask]) :
             localpath(syn, ids[mask], downloadLocation=cacheDir, ifcollision="overwrite.local")
 
-    metadata[pathColumn] = DataArray(String,size(metadata,1))
+    metadata[pathColumn] = ""
     metadata[mask,pathColumn] = paths
     metadata
 end
