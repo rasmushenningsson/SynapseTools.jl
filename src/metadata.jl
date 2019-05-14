@@ -97,11 +97,11 @@ end
 
 
 
-getsamplemetadata(syn, file::File, args...) = filtermetadata(_loadmetadata(syn, file["id"]), args...)
+getsamplemetadata(syn, file::File, args...) = filtermetadata(_loadmetadata(syn, file.id), args...)
 function getsamplemetadata(syn, folder::Folder, args...) 
     #filtermetadata(_loadmetadata(syn, metadataID), args...)
 
-    paths, names = listfiles(syn, folder["id"]) # TODO: update listfiles to support arguments of type Folder 
+    paths, names = listfiles(syn, folder.id) # TODO: update listfiles to support arguments of type Folder 
     mask = map(x->lowercase(splitext(x)[2])==".csv", names)
     paths, names = paths[mask], names[mask]
 

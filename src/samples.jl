@@ -13,7 +13,8 @@ function listaligned(syn, path::AbstractString, runName::AbstractString)
     paths, names = listfiles(syn, folder)
 
     # filter by extension
-    mask = map( x->ismatch(r".bam$",x), names )
+    # mask = map( x->ismatch(r".bam$",x), names )
+    mask = match.(r".bam$",names) .!= nothing
     paths[mask], names[mask]
 end
 

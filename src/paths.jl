@@ -2,11 +2,11 @@
 
 function id2name(syn, id)
     e = get(syn, id, downloadFile=false)
-    e["name"]
+    e.name
 end
 function id2name(syn, id, version)
     e = get(syn, id, downloadFile=false, version=version)
-    e["name"]
+    e.name
 end
 
 
@@ -33,21 +33,29 @@ end
 
 
 
-function getchildbyname(syn, parentID::AbstractString, child::AbstractString)
-    results = chunkedquery(syn, "select id from entity where entity.parentId=='$parentID' and entity.name=='$child'")
-
-    # # if 0 results, return "",
-    # # if 1 result, return it
-    # # if 2 results, error
+function getchildbyname(syn, parentID::AbstractString, child::AbstractString)::String
+    # if 0 results, return "",
+    # if 1 result, return it
+    # if 2 results, error
 
     res = ""
-    for (i,r) in enumerate(results)
-        i>1 && error("Unexpected error, multiple children with the same name.")
-        res = r["entity.id"]
+    for c in getchildren(syn, parentID)
+        if get(c,"name",nothing) == child
+            @assert isempty(res) "Unexpected error, multiple children with the same name."
+            res = c["id"]
+        end
     end
-    res::String
+    res
+
+    # results = chunkedquery(syn, "select id from entity where entity.parentId=='$parentID' and entity.name=='$child'")
+    # res = ""
+    # for (i,r) in enumerate(results)
+    #     i>1 && error("Unexpected error, multiple children with the same name.")
+    #     res = r["entity.id"]
+    # end
+    # res::String
 end
-getchildbyname(syn, parent::AbstractEntity, child::AbstractString) = getchildbyname(syn, parent["id"],child)
+getchildbyname(syn, parent::AbstractEntity, child::AbstractString) = getchildbyname(syn, parent.id,child)
 getchildbyname(syn, parent, args::AbstractString...) = getchildbyname(syn,getchildbyname(syn, parent, args[1]),args[2:end]...)
 
 
@@ -78,7 +86,7 @@ function createchildfolder(syn, parentID::AbstractString, childNames::AbstractSt
     while i≤length(childNames) # create folders until end of list
         folder = Folder(childNames[i], parent=parentID)
         folder = retrystore(syn, folder)
-        parentID = folder["id"]
+        parentID = folder.id
         i+=1
     end
     parentID
@@ -96,7 +104,7 @@ function uploadiflocal(syn, destID::AbstractString, filePath::AbstractString, ac
 
     file = File(path=filePath, name=fileName, parent=destID)
     file = retrystore(syn, file, activity=activity)
-    file["id"]
+    file.id
 end
 
 function uploadiflocal(syn, destID::AbstractString, filePath::AbstractString; fileName="", activityName::AbstractString="", dependencies=[], exec::AbstractString="")
@@ -114,18 +122,26 @@ end
 
 # Similar to readdir() but in Synapse. Returns vector of child ids as well as vector of child names.
 function synapse_listfiles(syn::Synapse, parentID::AbstractString)
-    results = chunkedquery(syn, "select id, name from entity where entity.parentId=='$parentID'")
-
     ids = Vector{String}()
     names = Vector{String}()
-    for r in results
-        push!(ids, r["entity.id"])
-        push!(names, r["entity.name"])
+    for c in getchildren(syn, parentID)
+        push!(ids,c["id"])
+        push!(names,c["name"])
     end
-
     ids, names
+
+    # results = chunkedquery(syn, "select id, name from entity where entity.parentId=='$parentID'")
+
+    # ids = Vector{String}()
+    # names = Vector{String}()
+    # for r in results
+    #     push!(ids, r["entity.id"])
+    #     push!(names, r["entity.name"])
+    # end
+
+    # ids, names
 end
-synapse_listfiles(syn::Synapse, parent::AbstractEntity) = synapse_listfiles(syn, parent["id"])
+synapse_listfiles(syn::Synapse, parent::AbstractEntity) = synapse_listfiles(syn, parent.id)
 
 
 
@@ -152,7 +168,7 @@ end
 function localpath(syn, path::AbstractString; kwargs...)
     if SynapseClient.utils.is_synapse_id(path) != nothing
         file = get(syn, path; kwargs...) # downloadLocation=cacheDir, ifcollision="overwrite.local"
-        file["path"]
+        file.path
     else
         path
     end
