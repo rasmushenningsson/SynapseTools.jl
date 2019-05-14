@@ -56,12 +56,12 @@ end
 #        :fieldname=>Predicate     - Only keep samples where the predicate function evaluates to true for the value of the given field name.
 #        Predicate                 - Only keep samples for which Predicate returns true. Predicate acts on entire sample row.
 filtermetadata(metadata::DataFrame, filter::Symbol) = filter in names(metadata) ? metadata : DataFrame()
-function filtermetadata{T<:AbstractArray}(metadata::DataFrame, filter::Pair{Symbol,T}) 
+function filtermetadata(metadata::DataFrame, filter::Pair{Symbol,T}) where {T<:AbstractArray}
     filter.first in names(metadata) || return DataFrame()
     mask = map!(x->!ismissing(x) && x in filter.second, BitArray(size(metadata,1)), metadata[filter.first])
     countnz(mask)==0 ? DataFrame() : metadata[mask,:]
 end
-function filtermetadata{T}(metadata::DataFrame, filter::Pair{Symbol,T}) 
+function filtermetadata(metadata::DataFrame, filter::Pair{Symbol,T}) where {T}
     filter.first in names(metadata) || return DataFrame()
     mask = .~ismissing.(metadata[filter.first]) .& (metadata[filter.first] .== filter.second)
     countnz(mask)==0 ? DataFrame() : metadata[mask,:]

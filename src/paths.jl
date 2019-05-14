@@ -12,7 +12,7 @@ end
 
 
 function retrystore(syn::Synapse, args...; kwargs...)
-    const delays = Int[5, 30, 60]
+    delays = Int[5, 30, 60]
     i = 0 # how many times did we fail?
     while true
         try
@@ -167,7 +167,7 @@ localpath(syn, paths::AbstractArray; kwargs...) = map!(x->localpath(syn,x;kwargs
 
 # UploadList is a vector of (uploadFolder, files, dependencies)
 const UploadList = Vector{Tuple{String, Array{String}, Array{String}}}
-markforupload!{T<:AbstractString}(list, uploadFolder::AbstractString, files::Array{T}, dependencies...) = 
+markforupload!(list, uploadFolder::AbstractString, files::Array{T}, dependencies...) where {T<:AbstractString} =
     push!(list, (convert(String,uploadFolder), convert(Array{String},files), convert(Array{String},vcat(dependencies...))))
 markforupload!(list, uploadFolder::AbstractString, file::AbstractString, dependencies...) = markforupload!(list, uploadFolder, [file], dependencies...)
 
